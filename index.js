@@ -4,6 +4,7 @@ import "dotenv/config";
 import cors from "cors";
 import { connectDB } from "./database/dbConnect.js";
 import templateRoute from "./routes/templateRoutes.js";
+import userRoute from "./routes/UserRoute.js";
 
 // functions
 const PORT = process.env.PORT || 5500;
@@ -21,6 +22,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use("/api", templateRoute);
+app.use("/api", userRoute);
 
 
 
