@@ -9,6 +9,7 @@ export const connectDB = async () => {
     // console.log("Using cached database connection");
     return;
   }
+  //hello
 
   try {
     const conn = await mongoose.connect(MONGO_URI);
