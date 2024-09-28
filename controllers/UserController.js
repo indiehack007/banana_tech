@@ -10,13 +10,14 @@ export const handleCreateUser = async (req, res) => {
     if (existingUser) {
       return res.status(400).json({ message: "User already exists" });
     }
+    const website = [];
 
     // Create a new user with or without websites
     const newUser = new User({
       username,
       email,
-      password, // Make sure to hash the password before saving in a real app
-      websites: websites || [], // Default to an empty array if websites are not provided
+      password,
+      websites: websites || [],
     });
 
     // Save the user to the database
@@ -57,10 +58,12 @@ export const handleUpdateUserWebsites = async (req, res) => {
 
 export const handleAddTemplatesToWebsite = async (req, res) => {
   try {
+    // console.log("hi")
     const { userId } = req.params; // Extract userId from request parameters
     const { website, templates } = req.body; // Extract website and newTemplates from request body
 
     // Find the user by ID
+    console.log(userId, website, templates);
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -102,10 +105,8 @@ export const handleGetUser = async (req, res) => {
 };
 
 export const handleGetWebsiteTemplates = async (req, res) => {
-  console.log("hi")
   try {
     const { userId, websiteId } = req.params; // Extract userId and websiteId from the request parameters
-
     // Find the user by their ID
     const user = await User.findById(userId);
     if (!user) {
@@ -160,12 +161,9 @@ export const handleDeleteWebsite = async (req, res) => {
   }
 };
 
-
-
-export const handleDeleteTemplateWebsite= async (req,res)=>{
+export const handleDeleteTemplateWebsite = async (req, res) => {
   try {
-    const {userId, websiteId, templateId } = req.params;
-
+    const { userId, websiteId, templateId } = req.params;
     // Find the website
     const user = await User.findById(userId);
     if (!user) {
@@ -173,22 +171,66 @@ export const handleDeleteTemplateWebsite= async (req,res)=>{
     }
     const website = user.websites.id(websiteId);
     if (!website) {
-      return res.status(404).json({ error: 'Website not found' });
+      return res.status(404).json({ error: "Website not found" });
     }
 
-    const templateIndex = website.templates.find((i)=> i=== templateId);
+    const templateIndex = website.templates.find((i) => i === templateId);
     if (templateIndex === -1) {
-      return res.status(404).json({ error: 'Template not found' });
+      return res.status(404).json({ error: "Template not found" });
     }
 
     website.templates.splice(templateIndex, 1);
 
     await user.save();
 
-    res.status(200).json({ message: 'Template deleted successfully' });
+    res.status(200).json({ message: "Template deleted successfully" });
   } catch (error) {
-    console.error('Error deleting template:', error);
-    res.status(500).json({  
- error: 'Internal server error' });
+    console.error("Error deleting template:", error);
+    res.status(500).json({
+      error: "Internal server error",
+    });
+  }
+};
+
+export const handleCreateGoogleUser = async (req, res) => {
+  const { access_token } = req.body;
+
+  try {
+    const response = await fetch(
+      "https://www.googleapis.com/oauth2/v3/userinfo",
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${access_token}`,
+        },
+      }
+    );
+
+    const userData = await response.json();
+    // console.log(userData)
+    const { name, email, picture } = userData;
+    // console.log(name,email)
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      const data = [existingUser, { picture }];
+
+      return res.status(200).json(data);
+    }
+
+    const websites = [];
+    const username = name;
+    const password = "#password";
+    const newUser = new User({
+      username,
+      email,
+      password,
+      websites: websites || [],
+    });
+
+    const savedUser = await newUser.save();
+    const data2 = [savedUser, { picture }];
+    res.status(201).json(data2);
+  } catch (error) {
+    return res.status(500).json({ message: "Server error", error });
   }
 };
